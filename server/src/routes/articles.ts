@@ -3,7 +3,7 @@ import { getDb } from '../db/schema.js';
 
 const router = Router();
 
-const DAILY_LIMIT = 30;
+const DAILY_LIMIT = 999;
 
 // 获取今日内容（高质量、有限量）
 router.get('/', (req, res) => {

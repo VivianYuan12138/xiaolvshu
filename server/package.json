@@ -9,15 +9,17 @@
     "start": "node dist/index.js"
   },
   "dependencies": {
+    "better-sqlite3": "^12.9.0",
+    "cors": "^2.8.5",
+    "dotenv": "^17.4.2",
     "express": "^5.1.0",
-    "better-sqlite3": "^11.8.0",
-    "rss-parser": "^3.13.0",
-    "cors": "^2.8.5"
+    "openai": "^6.34.0",
+    "rss-parser": "^3.13.0"
   },
   "devDependencies": {
-    "@types/express": "^5.0.0",
-    "@types/better-sqlite3": "^7.6.12",
+    "@types/better-sqlite3": "^7.6.13",
     "@types/cors": "^2.8.17",
+    "@types/express": "^5.0.0",
     "tsx": "^4.19.0",
     "typescript": "^5.7.0"
   }

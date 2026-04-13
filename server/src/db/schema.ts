@@ -21,6 +21,11 @@ export function initDb() {
       title TEXT NOT NULL,
       url TEXT NOT NULL UNIQUE,
       type TEXT NOT NULL DEFAULT 'rss',
+      platform TEXT NOT NULL DEFAULT 'other',
+      category TEXT NOT NULL DEFAULT 'general',
+      enabled INTEGER NOT NULL DEFAULT 1,
+      last_fetched_at TEXT,
+      error_count INTEGER NOT NULL DEFAULT 0,
       created_at TEXT NOT NULL DEFAULT (datetime('now'))
     );
 
@@ -57,6 +62,24 @@ export function initDb() {
   }
   if (!colNames.includes('author_persona')) {
     db.exec('ALTER TABLE articles ADD COLUMN author_persona TEXT');
+  }
+
+  // feeds 表新列
+  const feedCols = (db.prepare("PRAGMA table_info(feeds)").all() as { name: string }[]).map(c => c.name);
+  if (!feedCols.includes('platform')) {
+    db.exec("ALTER TABLE feeds ADD COLUMN platform TEXT NOT NULL DEFAULT 'other'");
+  }
+  if (!feedCols.includes('category')) {
+    db.exec("ALTER TABLE feeds ADD COLUMN category TEXT NOT NULL DEFAULT 'general'");
+  }
+  if (!feedCols.includes('enabled')) {
+    db.exec('ALTER TABLE feeds ADD COLUMN enabled INTEGER NOT NULL DEFAULT 1');
+  }
+  if (!feedCols.includes('last_fetched_at')) {
+    db.exec('ALTER TABLE feeds ADD COLUMN last_fetched_at TEXT');
+  }
+  if (!feedCols.includes('error_count')) {
+    db.exec('ALTER TABLE feeds ADD COLUMN error_count INTEGER NOT NULL DEFAULT 0');
   }
 
   db.close();

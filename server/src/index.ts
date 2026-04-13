@@ -1,8 +1,10 @@
+import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { initDb } from './db/schema.js';
+import { seedFeeds } from './db/seeds.js';
 import feedsRouter from './routes/feeds.js';
 import articlesRouter from './routes/articles.js';
 import fs from 'fs';
@@ -15,8 +17,9 @@ if (!fs.existsSync(dataDir)) {
   fs.mkdirSync(dataDir, { recursive: true });
 }
 
-// 初始化数据库
+// 初始化数据库 & 种子数据
 initDb();
+seedFeeds();
 
 const app = express();
 const PORT = 3001;

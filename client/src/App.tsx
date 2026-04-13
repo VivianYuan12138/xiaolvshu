@@ -10,7 +10,7 @@ import { BottomNav } from './components/BottomNav';
 import { SearchBar } from './components/SearchBar';
 import { FavoritesPage } from './components/FavoritesPage';
 
-const DAILY_LIMIT = 30;
+const DAILY_LIMIT = 999;
 
 function App() {
   const [articles, setArticles] = useState<Article[]>([]);
@@ -234,7 +234,7 @@ function App() {
 
             {/* 关于 */}
             <div className="text-center pt-6">
-              <p className="text-xs text-[#ccc]">小绿书 v0.2.0</p>
+              <p className="text-xs text-[#ccc]">小绿书 v0.3.0</p>
               <p className="text-[10px] text-[#ddd] mt-1">只看真正好的内容</p>
             </div>
           </div>
