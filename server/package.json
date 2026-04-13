@@ -6,7 +6,13 @@
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "build": "tsc",
-    "start": "node dist/index.js"
+    "start": "node dist/index.js",
+    "pipeline": "tsx run-rewrite.ts",
+    "fetch": "tsx scripts/fetch-only.ts",
+    "score": "tsx scripts/score-only.ts",
+    "rewrite": "tsx scripts/rewrite-only.ts",
+    "stats": "tsx scripts/stats.ts",
+    "show": "tsx scripts/show-articles.ts"
   },
   "dependencies": {
     "better-sqlite3": "^12.9.0",
