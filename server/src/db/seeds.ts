@@ -7,38 +7,44 @@ interface SeedFeed {
   category: string;
 }
 
-// RSSHub instance that actually works for Twitter
 const RSSHUB = 'https://rsshub.pseudoyu.com';
 
 const SEED_FEEDS: SeedFeed[] = [
-  // ===== Reddit (native RSS, needs browser User-Agent) =====
-  { title: 'Reddit - Technology', url: 'https://www.reddit.com/r/technology/top/.rss?t=day', platform: 'reddit', category: 'tech' },
-  { title: 'Reddit - Programming', url: 'https://www.reddit.com/r/programming/top/.rss?t=day', platform: 'reddit', category: 'tech' },
-  { title: 'Reddit - Machine Learning', url: 'https://www.reddit.com/r/MachineLearning/top/.rss?t=day', platform: 'reddit', category: 'ai' },
-  { title: 'Reddit - Startups', url: 'https://www.reddit.com/r/startups/top/.rss?t=day', platform: 'reddit', category: 'business' },
-  { title: 'Reddit - Science', url: 'https://www.reddit.com/r/science/top/.rss?t=day', platform: 'reddit', category: 'science' },
+  // ===== 高质量 Newsletter RSS（已经是编辑精选过的，内容完整） =====
+  { title: 'TLDR AI', url: 'https://bullrich.dev/tldr-rss/ai.rss', platform: 'newsletter', category: 'ai' },
+  { title: 'The Rundown AI', url: 'https://rss.beehiiv.com/feeds/2R3C6Bt5wj.xml', platform: 'newsletter', category: 'ai' },
+  { title: 'TLDR Tech', url: 'https://bullrich.dev/tldr-rss/tech.rss', platform: 'newsletter', category: 'tech' },
 
-  // ===== Twitter/X (via RSSHub pseudoyu instance) =====
-  { title: 'X - Elon Musk', url: `${RSSHUB}/twitter/user/elonmusk`, platform: 'twitter', category: 'tech' },
+  // ===== GitHub Trending（开源动态，信息密度高） =====
+  { title: 'GitHub Trending - Python', url: 'https://mshibanami.github.io/GitHubTrendingRSS/daily/python.xml', platform: 'github', category: 'tech' },
+  { title: 'GitHub Trending - All', url: 'https://mshibanami.github.io/GitHubTrendingRSS/daily/all.xml', platform: 'github', category: 'tech' },
+  { title: 'GitHub Trending - TypeScript', url: 'https://mshibanami.github.io/GitHubTrendingRSS/daily/typescript.xml', platform: 'github', category: 'tech' },
+
+  // ===== Product Hunt（新产品发现） =====
+  { title: 'Product Hunt', url: 'https://www.producthunt.com/feed', platform: 'producthunt', category: 'product' },
+
+  // ===== Hacker News（技术社区讨论） =====
+  { title: 'Hacker News - Best', url: 'https://hnrss.org/best?count=30', platform: 'hackernews', category: 'tech' },
+  { title: 'Hacker News - Show HN', url: 'https://hnrss.org/show?count=20', platform: 'hackernews', category: 'product' },
+
+  // ===== Reddit（话题深度讨论） =====
+  { title: 'Reddit - Technology', url: 'https://www.reddit.com/r/technology/top/.rss?t=day', platform: 'reddit', category: 'tech' },
+  { title: 'Reddit - Machine Learning', url: 'https://www.reddit.com/r/MachineLearning/top/.rss?t=day', platform: 'reddit', category: 'ai' },
+  { title: 'Reddit - LocalLLaMA', url: 'https://www.reddit.com/r/LocalLLaMA/top/.rss?t=day', platform: 'reddit', category: 'ai' },
+
+  // ===== Twitter/X（一手信息） =====
   { title: 'X - OpenAI', url: `${RSSHUB}/twitter/user/OpenAI`, platform: 'twitter', category: 'ai' },
   { title: 'X - Andrej Karpathy', url: `${RSSHUB}/twitter/user/karpathy`, platform: 'twitter', category: 'ai' },
   { title: 'X - 宝玉xp', url: `${RSSHUB}/twitter/user/dotey`, platform: 'twitter', category: 'ai' },
 
-  // ===== 小红书 & 微信 =====
-  // Public RSSHub instances have blocked these platforms.
-  // To enable, self-host RSSHub with cookies configured:
-  //   docker run -d -p 1200:1200 diygod/rsshub
-  // Then set RSSHUB_SELF_HOSTED=http://localhost:1200 in .env
-  // Uncomment below after self-hosting:
-  // { title: '小红书 - AI探索', url: '{SELF_RSSHUB}/xiaohongshu/user/xxx/notes', platform: 'xiaohongshu', category: 'ai' },
-  // { title: '微信 - 量子位', url: '{SELF_RSSHUB}/wechat/mp/xxx', platform: 'wechat', category: 'ai' },
-
-  // ===== Hacker News (reliable backup) =====
-  { title: 'Hacker News - Best', url: 'https://hnrss.org/best', platform: 'hackernews', category: 'tech' },
-
-  // ===== Tech blogs (high quality, always work) =====
+  // ===== 中文科技媒体 =====
+  { title: '36氪 - 最新', url: `${RSSHUB}/36kr/news/latest`, platform: 'media', category: 'business' },
+  { title: '少数派', url: 'https://sspai.com/feed', platform: 'media', category: 'tech' },
   { title: '阮一峰的网络日志', url: 'https://www.ruanyifeng.com/blog/atom.xml', platform: 'blog', category: 'tech' },
-  { title: 'Paul Graham Essays', url: 'http://www.aaronsw.com/2002/feeds/pgessays.rss', platform: 'blog', category: 'business' },
+
+  // ===== 小红书 & 微信（需自建 RSSHub） =====
+  // { title: '小红书 - AI', url: '{SELF_RSSHUB}/xiaohongshu/user/xxx/notes', platform: 'xiaohongshu', category: 'ai' },
+  // { title: '微信 - 量子位', url: '{SELF_RSSHUB}/wechat/mp/xxx', platform: 'wechat', category: 'ai' },
 ];
 
 export function seedFeeds() {
