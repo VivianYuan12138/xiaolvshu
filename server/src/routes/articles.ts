@@ -25,7 +25,7 @@ router.get('/', (req, res) => {
     params.push(`%"${tag}"%`);
   }
 
-  query += ` ORDER BY a.published_at DESC LIMIT ?`;
+  query += ` ORDER BY (a.ai_score * COALESCE(a.ai_relevance, 5) / 10.0) DESC, a.published_at DESC LIMIT ?`;
   params.push(DAILY_LIMIT);
 
   const articles = db.prepare(query).all(...params);
@@ -119,6 +119,33 @@ router.get('/search', (req, res) => {
   `).all(`%${q}%`, `%${q}%`, `%${q}%`, `%${q}%`);
   db.close();
   res.json(articles);
+});
+
+// 获取所有收藏
+router.get('/favorites', (_req, res) => {
+  const db = getDb();
+  const articles = db.prepare(`
+    SELECT a.*, f.title as feed_title
+    FROM articles a
+    LEFT JOIN feeds f ON a.feed_id = f.id
+    WHERE a.is_favorited = 1
+    ORDER BY a.favorited_at DESC
+  `).all();
+  db.close();
+  res.json(articles);
+});
+
+// 切换收藏状态
+router.post('/:id/favorite', (req, res) => {
+  const db = getDb();
+  const article = db.prepare('SELECT is_favorited FROM articles WHERE id = ?').get(req.params.id) as { is_favorited: number } | undefined;
+  if (!article) { db.close(); res.status(404).json({ error: '文章不存在' }); return; }
+
+  const newState = article.is_favorited ? 0 : 1;
+  db.prepare('UPDATE articles SET is_favorited = ?, favorited_at = ? WHERE id = ?')
+    .run(newState, newState ? new Date().toISOString() : null, req.params.id);
+  db.close();
+  res.json({ ok: true, is_favorited: newState });
 });
 
 // 标记已读

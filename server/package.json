@@ -12,7 +12,8 @@
     "score": "tsx scripts/score-only.ts",
     "rewrite": "tsx scripts/rewrite-only.ts",
     "stats": "tsx scripts/stats.ts",
-    "show": "tsx scripts/show-articles.ts"
+    "show": "tsx scripts/show-articles.ts",
+    "discover": "tsx scripts/discover-only.ts"
   },
   "dependencies": {
     "@mozilla/readability": "^0.6.0",

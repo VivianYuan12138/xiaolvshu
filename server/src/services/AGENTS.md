@@ -8,6 +8,25 @@
 | `author-agent.ts` | 文章改写，调用改写 prompt + few-shot | 中 - prompt 在 `prompts/` 目录 |
 | `rss.ts` | RSS 抓取 + 图片提取 | 低 - 独立模块 |
 
+## 推荐反馈系统
+
+### 评分双分制
+- **Quality Score (ai_score)**: 客观质量分，不随用户行为变化，是硬性护栏
+- **Relevance Score (ai_relevance)**: 基于用户收藏偏好的相关度，动态注入 prompt
+- 最终排序: `ai_score * COALESCE(ai_relevance, 5) / 10.0 DESC`
+- 无收藏时 relevance 默认 5（中性），评分 prompt 退回 V1 版（行为不变）
+
+### 内容发现 (`discovery.ts`)
+- 从收藏提取关键词 → Google News RSS → 注册为 `is_dynamic=1` 的 feed
+- 动态 feed 7 天过期自动清理（有收藏文章的 feed 保留）
+- 收藏不足 3 篇时跳过发现
+- 集成在 pipeline Step 0，先于 fetchAllFeeds 执行
+
+### 收藏
+- 前端通过 `POST /api/articles/:id/favorite` 同步到后端
+- 存储: `articles.is_favorited` + `articles.favorited_at`
+- `getUserPreferences()` 在 ai.ts 中读取收藏，提取标签频率 + 标题
+
 ## 关键规则
 
 ### AI Client (`ai-client.ts`)

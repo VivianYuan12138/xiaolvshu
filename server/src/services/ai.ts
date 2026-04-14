@@ -1,14 +1,37 @@
 import { chatCompletion, parseJSON, getScoreModel } from './ai-client.js';
 import { getDb } from '../db/schema.js';
 import {
-  SCORING_SYSTEM_PROMPT_V1,
   SCORING_TEMPERATURE,
   SCORING_MAX_TOKENS,
   MIN_CONTENT_LENGTH,
+  buildScoringPrompt,
   type ScoreResult,
+  type UserPreferences,
 } from '../prompts/index.js';
 
 export type { ScoreResult };
+
+function getUserPreferences(db: ReturnType<typeof getDb>): UserPreferences | undefined {
+  const favs = db.prepare(`
+    SELECT title, rewritten_title, ai_tags FROM articles
+    WHERE is_favorited = 1
+    ORDER BY favorited_at DESC LIMIT 20
+  `).all() as { title: string; rewritten_title: string | null; ai_tags: string | null }[];
+
+  if (favs.length === 0) return undefined;
+
+  const tagCount: Record<string, number> = {};
+  for (const f of favs) {
+    try {
+      const tags: string[] = f.ai_tags ? JSON.parse(f.ai_tags) : [];
+      for (const t of tags) tagCount[t] = (tagCount[t] || 0) + 1;
+    } catch {}
+  }
+  const topTags = Object.entries(tagCount).sort((a, b) => b[1] - a[1]).map(e => e[0]);
+  const recentTitles = favs.slice(0, 5).map(f => f.rewritten_title || f.title);
+
+  return { topTags, recentTitles };
+}
 
 export async function scoreArticle(articleId: number): Promise<ScoreResult> {
   const db = getDb();
@@ -35,29 +58,34 @@ export async function scoreArticle(articleId: number): Promise<ScoreResult> {
       summary: article.title,
       reason: '内容过短，信息量不足',
     };
-    db.prepare('UPDATE articles SET ai_score = ?, ai_tags = ?, ai_summary = ? WHERE id = ?')
-      .run(result.score, '[]', result.summary, articleId);
+    db.prepare('UPDATE articles SET ai_score = ?, ai_relevance = ?, ai_tags = ?, ai_summary = ? WHERE id = ?')
+      .run(result.score, null, '[]', result.summary, articleId);
     db.close();
     return result;
   }
 
   const textToScore = rawText.slice(0, 3000);
 
+  // 注入用户偏好到评分 prompt
+  const preferences = getUserPreferences(db);
+  const systemPrompt = buildScoringPrompt(preferences);
+
   const text = await chatCompletion(
     [
-      { role: 'system', content: SCORING_SYSTEM_PROMPT_V1 },
+      { role: 'system', content: systemPrompt },
       { role: 'user', content: `标题：${article.title}\n正文：${textToScore}` },
     ],
     { model: getScoreModel(), maxTokens: SCORING_MAX_TOKENS, temperature: SCORING_TEMPERATURE }
   );
 
-  const result = parseJSON<ScoreResult>(text);
+  const parsed = parseJSON<ScoreResult & { relevance?: number }>(text);
+  const relevance = parsed.relevance ?? null;
 
-  db.prepare('UPDATE articles SET ai_score = ?, ai_tags = ?, ai_summary = ? WHERE id = ?')
-    .run(result.score, JSON.stringify(result.tags), result.summary, articleId);
+  db.prepare('UPDATE articles SET ai_score = ?, ai_relevance = ?, ai_tags = ?, ai_summary = ? WHERE id = ?')
+    .run(parsed.score, relevance, JSON.stringify(parsed.tags), parsed.summary, articleId);
 
   db.close();
-  return result;
+  return { score: parsed.score, tags: parsed.tags, summary: parsed.summary, reason: parsed.reason };
 }
 
 /**

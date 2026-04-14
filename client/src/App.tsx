@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { fetchArticles, fetchTags, markRead, searchArticles, type Article, type Tag } from './api';
+import { fetchArticles, fetchTags, markRead, searchArticles, toggleFavorite as apiToggleFavorite, fetchFavorites, type Article, type Tag } from './api';
 import { ArticleCard } from './components/ArticleCard';
 import { ArticleDetail } from './components/ArticleDetail';
 import { TagFilter } from './components/TagFilter';
@@ -29,18 +29,27 @@ function App() {
   const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
-    setFavorites(loadFavorites());
+    // 一次性迁移：localStorage → 后端
+    const legacyFavs = loadFavorites();
+    if (legacyFavs.length > 0) {
+      Promise.all(legacyFavs.map(a => apiToggleFavorite(a.id))).then(() => {
+        localStorage.removeItem('xlvs_favs_v2');
+        fetchFavorites().then(setFavorites);
+      });
+    } else {
+      fetchFavorites().then(setFavorites);
+    }
   }, []);
 
   const favoriteIds = favorites.map(a => a.id);
 
-  const toggleFavorite = (article: Article) => {
+  const toggleFavorite = async (article: Article) => {
+    // 乐观更新 UI
     setFavorites(prev => {
       const exists = prev.some(a => a.id === article.id);
-      const next = exists ? prev.filter(a => a.id !== article.id) : [...prev, article];
-      saveFavorites(next);
-      return next;
+      return exists ? prev.filter(a => a.id !== article.id) : [...prev, { ...article, is_favorited: 1 }];
     });
+    await apiToggleFavorite(article.id);
   };
 
   const loadData = useCallback(async () => {
