@@ -6,33 +6,30 @@ interface Props {
   onSelect: (tag: string | null) => void;
 }
 
-const DEFAULT_TABS = ['推荐', '技术', '投资', '生活', '深度'];
+const DEFAULT_TABS = ['推荐', '技术', 'AI', '商业', '开源', '产品'];
 
 export function TagFilter({ tags, selected, onSelect }: Props) {
   const allTabs = tags.length > 0
     ? ['推荐', ...tags.map(t => t.tag)]
     : DEFAULT_TABS;
 
-  const uniqueTabs = [...new Set(allTabs)];
+  const uniqueTabs = [...new Set(allTabs)].slice(0, 12);
 
   return (
-    <div className="flex overflow-x-auto no-scrollbar border-b border-[#f0f0f0]">
+    <div className="flex overflow-x-auto no-scrollbar px-2 pb-2 pt-0.5 gap-1.5">
       {uniqueTabs.map((tab) => {
         const isSelected = tab === '推荐' ? selected === null : tab === selected;
         return (
           <button
             key={tab}
             onClick={() => onSelect(tab === '推荐' ? null : tab)}
-            className="shrink-0 px-4 py-2.5 relative transition-colors"
+            className={`shrink-0 px-4 py-1.5 rounded-full text-[13px] transition-all press-scale ${
+              isSelected
+                ? 'bg-emerald-500 text-white font-semibold shadow-sm shadow-emerald-200'
+                : 'bg-white text-[#666] hover:bg-gray-50'
+            }`}
           >
-            <span className={`text-[13px] ${
-              isSelected ? 'text-[#333] font-bold' : 'text-[#999]'
-            }`}>
-              {tab}
-            </span>
-            {isSelected && (
-              <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-4 h-[3px] bg-[#ff2442] rounded-full" />
-            )}
+            {tab}
           </button>
         );
       })}

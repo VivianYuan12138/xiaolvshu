@@ -8,12 +8,38 @@ interface Props {
   onToggleFavorite: () => void;
 }
 
-const PERSONA_AVATARS: Record<string, { bg: string; emoji: string }> = {
-  '科技小明': { bg: 'bg-blue-500', emoji: '🔬' },
-  '投资笔记': { bg: 'bg-amber-500', emoji: '📊' },
-  '生活观察': { bg: 'bg-pink-500', emoji: '🌸' },
-  '深度阅读': { bg: 'bg-purple-500', emoji: '📚' },
+const PERSONA_CONFIG: Record<string, { color: string; icon: string }> = {
+  '科技小明': { color: '#3b82f6', icon: '⚡' },
+  '投资笔记': { color: '#f59e0b', icon: '📈' },
+  '生活观察': { color: '#ec4899', icon: '🌿' },
+  '深度阅读': { color: '#8b5cf6', icon: '📖' },
 };
+
+function renderMarkdown(content: string) {
+  return content.split('\n').map((line, i) => {
+    if (!line.trim()) return <div key={i} className="h-3" />;
+    if (line.startsWith('### '))
+      return <h3 key={i} className="text-[15px] font-bold text-[#1a1a1a] mt-5 mb-1.5">{line.slice(4)}</h3>;
+    if (line.startsWith('## '))
+      return <h2 key={i} className="text-base font-bold text-[#1a1a1a] mt-6 mb-2">{line.slice(3)}</h2>;
+    if (line.startsWith('# '))
+      return <h2 key={i} className="text-lg font-bold text-[#1a1a1a] mt-6 mb-2">{line.slice(2)}</h2>;
+    if (line.startsWith('- **') || line.startsWith('- ')) {
+      const text = line.slice(2);
+      return (
+        <div key={i} className="flex gap-2 pl-1 py-0.5">
+          <span className="text-emerald-400 mt-1.5 text-[8px]">●</span>
+          <p className="flex-1 text-[15px] text-[#444] leading-[1.75]"
+             dangerouslySetInnerHTML={{ __html: text.replace(/\*\*(.+?)\*\*/g, '<strong class="text-[#1a1a1a] font-semibold">$1</strong>') }} />
+        </div>
+      );
+    }
+    return (
+      <p key={i} className="text-[15px] text-[#444] leading-[1.8]"
+         dangerouslySetInnerHTML={{ __html: line.replace(/\*\*(.+?)\*\*/g, '<strong class="text-[#1a1a1a] font-semibold">$1</strong>') }} />
+    );
+  });
+}
 
 export function ArticleDetail({ article, onBack, isFavorited, onToggleFavorite }: Props) {
   const [closing, setClosing] = useState(false);
@@ -21,123 +47,115 @@ export function ArticleDetail({ article, onBack, isFavorited, onToggleFavorite }
   const displayTitle = article.rewritten_title || article.title;
   const displayContent = article.rewritten_content || article.content || article.summary;
   const persona = article.author_persona || article.feed_title;
-  const avatar = PERSONA_AVATARS[persona] || { bg: 'bg-gray-400', emoji: persona.charAt(0) };
+  const pConfig = PERSONA_CONFIG[persona] || { color: '#6b7280', icon: persona.charAt(0) };
   const isMarkdown = article.rewritten_content != null;
 
   const handleBack = () => {
     setClosing(true);
-    setTimeout(onBack, 250);
+    setTimeout(onBack, 280);
   };
 
   return (
-    <div className={`fixed inset-0 bg-white z-50 overflow-y-auto ${closing ? 'slide-up-exit' : 'slide-up-enter'}`}>
+    <div className={`fixed inset-0 bg-[#f5f7f5] z-50 overflow-y-auto ${closing ? 'slide-up-exit' : 'slide-up-enter'}`}>
       {/* Header */}
-      <div className="sticky top-0 bg-white/95 backdrop-blur-sm border-b border-[#f0f0f0] px-3 py-2.5 flex items-center justify-between z-10">
-        <button onClick={handleBack} className="p-1 -ml-1 press-scale">
-          <svg className="w-5 h-5 text-[#333]" fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24">
+      <div className="sticky top-0 glass border-b border-white/40 px-3 py-2.5 flex items-center justify-between z-10">
+        <button onClick={handleBack} className="w-8 h-8 rounded-full bg-white/60 flex items-center justify-center press-scale">
+          <svg className="w-4.5 h-4.5 text-[#333]" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
           </svg>
         </button>
 
         <div className="flex items-center gap-2">
-          <div className={`w-7 h-7 rounded-full ${avatar.bg} flex items-center justify-center`}>
-            <span className="text-white text-xs">{avatar.emoji.length > 1 ? avatar.emoji : persona.charAt(0)}</span>
+          <div
+            className="w-7 h-7 rounded-full flex items-center justify-center"
+            style={{ backgroundColor: pConfig.color + '15' }}
+          >
+            <span className="text-sm">{pConfig.icon}</span>
           </div>
-          <div>
-            <span className="text-sm font-semibold text-[#333]">{persona}</span>
-          </div>
+          <span className="text-sm font-semibold text-[#333]">{persona}</span>
         </div>
 
         <a
           href={article.link}
           target="_blank"
           rel="noopener noreferrer"
-          className="text-xs text-[#ff2442] font-medium px-3 py-1 border border-[#ff2442] rounded-full press-scale"
+          className="text-xs text-emerald-600 font-medium px-3 py-1.5 bg-emerald-50 rounded-full press-scale"
         >
-          关注
+          原文
         </a>
       </div>
 
-      {/* 封面图 */}
+      {/* Cover */}
       {article.image_url && (
-        <img src={article.image_url} alt="" className="w-full max-h-[50vh] object-cover" />
+        <img src={article.image_url} alt="" className="w-full max-h-[45vh] object-cover" />
       )}
 
-      {/* 正文 */}
-      <div className="px-4 py-4">
-        <h1 className="text-[17px] font-bold text-[#333] leading-snug mb-4 tracking-tight">
+      {/* Body */}
+      <div className="bg-white rounded-t-3xl -mt-4 relative z-10 px-5 pt-6 pb-28 min-h-[60vh]">
+        <h1 className="text-xl font-bold text-[#1a1a1a] leading-snug mb-5 tracking-tight">
           {displayTitle}
         </h1>
 
         {isMarkdown ? (
-          <div className="text-[15px] text-[#555] leading-[1.8] space-y-3">
-            {displayContent.split('\n').map((line, i) => {
-              if (!line.trim()) return null;
-              if (line.startsWith('# '))
-                return <h2 key={i} className="text-base font-bold text-[#333] mt-5 mb-1">{line.slice(2)}</h2>;
-              if (line.startsWith('## '))
-                return <h3 key={i} className="text-[15px] font-bold text-[#333] mt-4 mb-1">{line.slice(3)}</h3>;
-              if (line.startsWith('- '))
-                return <p key={i} className="pl-3 border-l-2 border-green-300 text-[14px]">{line.slice(2)}</p>;
-              return <p key={i}>{line}</p>;
-            })}
-          </div>
+          <div className="space-y-0.5">{renderMarkdown(displayContent)}</div>
         ) : (
           <div
-            className="text-[15px] text-[#555] leading-[1.8]
-                       [&_img]:rounded-lg [&_img]:my-3 [&_img]:w-full
-                       [&_a]:text-green-600 [&_a]:no-underline
+            className="text-[15px] text-[#444] leading-[1.8]
+                       [&_img]:rounded-xl [&_img]:my-4 [&_img]:w-full
+                       [&_a]:text-emerald-600 [&_a]:no-underline
                        [&_p]:mb-3"
             dangerouslySetInnerHTML={{ __html: displayContent }}
           />
         )}
 
-        {/* 标签 */}
+        {/* Tags */}
         {tags.length > 0 && (
-          <div className="flex flex-wrap gap-2 mt-6 mb-4">
+          <div className="flex flex-wrap gap-2 mt-8">
             {tags.map((tag) => (
-              <span
-                key={tag}
-                className="text-xs text-[#2f7df4] bg-[#f0f6ff] px-2.5 py-1 rounded-sm"
-              >
+              <span key={tag} className="tag-pill bg-emerald-50 text-emerald-600 text-xs">
                 # {tag}
               </span>
             ))}
           </div>
         )}
 
-        {/* 时间与摘要 */}
-        <div className="text-xs text-[#ccc] mt-6 pt-4 border-t border-[#f5f5f5] space-y-1">
+        {/* Meta */}
+        <div className="mt-8 pt-4 border-t border-[#f0f0f0] space-y-1.5">
           {article.published_at && (
-            <p>{new Date(article.published_at).toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+            <p className="text-xs text-[#bbb]">
+              {new Date(article.published_at).toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric' })}
+            </p>
           )}
           {article.ai_summary && (
-            <p className="text-[#aaa]">AI: {article.ai_summary}</p>
+            <p className="text-xs text-emerald-400 flex items-center gap-1">
+              <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-400" />
+              {article.ai_summary}
+            </p>
           )}
         </div>
       </div>
 
-      {/* 底部操作栏 */}
+      {/* Bottom bar */}
       <div
-        className="sticky bottom-0 bg-white border-t border-[#f0f0f0] px-4 py-2.5 flex items-center gap-3"
+        className="fixed bottom-0 left-0 right-0 glass border-t border-white/40 px-4 py-2.5 flex items-center gap-3 z-20"
         style={{ paddingBottom: 'calc(12px + var(--safe-bottom))' }}
       >
         <input
           type="text"
           placeholder="说点什么..."
-          className="flex-1 px-3.5 py-2 bg-[#f5f5f5] rounded-full text-sm placeholder:text-[#ccc] focus:outline-none"
+          className="flex-1 px-4 py-2.5 bg-[#f0f2f0] rounded-2xl text-sm placeholder:text-[#ccc] focus:outline-none"
           readOnly
         />
 
         <button onClick={onToggleFavorite} className="p-2 press-scale">
           <svg
-            className={`w-6 h-6 transition-colors ${isFavorited ? 'text-[#ff2442] fill-[#ff2442]' : 'text-[#ccc]'}`}
+            className={`w-6 h-6 transition-all ${isFavorited ? 'text-emerald-500 fill-emerald-500 scale-110' : 'text-[#ccc]'}`}
             fill={isFavorited ? 'currentColor' : 'none'}
             stroke="currentColor"
             strokeWidth={1.8}
             viewBox="0 0 24 24"
           >
-            <path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+            <path strokeLinecap="round" strokeLinejoin="round" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
           </svg>
         </button>
 

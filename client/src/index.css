@@ -1,11 +1,21 @@
 @import "tailwindcss";
 
 :root {
-  --green-50: #f0fdf4;
-  --green-100: #dcfce7;
-  --green-500: #22c55e;
-  --green-600: #16a34a;
-  --green-700: #15803d;
+  --green-50: #ecfdf5;
+  --green-100: #d1fae5;
+  --green-200: #a7f3d0;
+  --green-400: #34d399;
+  --green-500: #10b981;
+  --green-600: #059669;
+  --green-700: #047857;
+  --accent: #10b981;
+  --accent-light: #d1fae5;
+  --bg: #f5f7f5;
+  --card: #ffffff;
+  --text: #1a1a1a;
+  --text-secondary: #6b7280;
+  --text-muted: #9ca3af;
+  --border: rgba(0,0,0,0.06);
   --safe-bottom: env(safe-area-inset-bottom, 0px);
 }
 
@@ -15,54 +25,51 @@
 
 body {
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
-  background: #f2f2f2;
-  color: #333;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+  background: var(--bg);
+  color: var(--text);
   -webkit-font-smoothing: antialiased;
   overscroll-behavior-y: contain;
 }
 
 ::-webkit-scrollbar { display: none; }
 
-/* 页面转场动画 */
+/* === Animations === */
 .slide-up-enter {
-  animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: slideUp 0.35s cubic-bezier(0.32, 0.72, 0, 1) forwards;
 }
 .slide-up-exit {
-  animation: slideDown 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: slideDown 0.28s cubic-bezier(0.32, 0.72, 0, 1) forwards;
 }
-
 @keyframes slideUp {
-  from { transform: translateY(100%); }
-  to { transform: translateY(0); }
+  from { transform: translateY(100%); opacity: 0.8; }
+  to { transform: translateY(0); opacity: 1; }
 }
 @keyframes slideDown {
-  from { transform: translateY(0); }
-  to { transform: translateY(100%); }
+  from { transform: translateY(0); opacity: 1; }
+  to { transform: translateY(100%); opacity: 0; }
 }
 
-/* 淡入动画 */
 .fade-in {
-  animation: fadeIn 0.2s ease-out forwards;
+  animation: fadeIn 0.25s ease-out forwards;
 }
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
-/* 卡片出现动画 */
 .card-appear {
-  animation: cardAppear 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: cardAppear 0.5s cubic-bezier(0.32, 0.72, 0, 1) forwards;
   opacity: 0;
 }
 @keyframes cardAppear {
-  from { opacity: 0; transform: translateY(20px) scale(0.97); }
+  from { opacity: 0; transform: translateY(24px) scale(0.96); }
   to { opacity: 1; transform: translateY(0) scale(1); }
 }
 
-/* 骨架屏闪烁 */
+/* Skeleton shimmer */
 .skeleton-pulse {
-  background: linear-gradient(90deg, #e5e7eb 25%, #f3f4f6 50%, #e5e7eb 75%);
+  background: linear-gradient(90deg, #e8ebe8 25%, #f3f5f3 50%, #e8ebe8 75%);
   background-size: 200% 100%;
   animation: shimmer 1.5s infinite;
 }
@@ -71,10 +78,40 @@ body {
   100% { background-position: -200% 0; }
 }
 
-/* 弹性按压效果 */
+/* Press effect */
 .press-scale {
-  transition: transform 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: transform 0.15s cubic-bezier(0.32, 0.72, 0, 1), opacity 0.15s;
 }
 .press-scale:active {
   transform: scale(0.96);
+  opacity: 0.85;
+}
+
+/* Glassmorphism helper */
+.glass {
+  background: rgba(255,255,255,0.72);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+}
+
+/* Tag pill */
+.tag-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: 100px;
+  font-size: 11px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+/* Score badge */
+.score-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 2px 6px;
+  border-radius: 6px;
+  font-size: 10px;
+  font-weight: 600;
 }
