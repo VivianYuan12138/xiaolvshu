@@ -9,6 +9,8 @@ import { SkeletonGrid } from './components/SkeletonCard';
 import { BottomNav } from './components/BottomNav';
 import { SearchBar } from './components/SearchBar';
 import { FavoritesPage } from './components/FavoritesPage';
+import { EmptyRecommend } from './components/EmptyRecommend';
+import { loadFavorites, saveFavorites, loadReadState, saveReadCount } from './storage';
 
 const DAILY_LIMIT = 999;
 
@@ -23,19 +25,20 @@ function App() {
   const [activeTab, setActiveTab] = useState<'discover' | 'favorites' | 'settings'>('discover');
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<Article[] | null>(null);
-  const [favorites, setFavorites] = useState<number[]>([]);
-  const searchTimer = useRef<ReturnType<typeof setTimeout>>();
+  const [favorites, setFavorites] = useState<Article[]>([]);
+  const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // 加载收藏
   useEffect(() => {
-    const stored = localStorage.getItem('xlvs_favs');
-    if (stored) setFavorites(JSON.parse(stored));
+    setFavorites(loadFavorites());
   }, []);
 
-  const toggleFavorite = (id: number) => {
+  const favoriteIds = favorites.map(a => a.id);
+
+  const toggleFavorite = (article: Article) => {
     setFavorites(prev => {
-      const next = prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id];
-      localStorage.setItem('xlvs_favs', JSON.stringify(next));
+      const exists = prev.some(a => a.id === article.id);
+      const next = exists ? prev.filter(a => a.id !== article.id) : [...prev, article];
+      saveFavorites(next);
       return next;
     });
   };
@@ -55,18 +58,8 @@ function App() {
     loadData();
   }, [loadData]);
 
-  // 今日已读
   useEffect(() => {
-    const today = new Date().toDateString();
-    const stored = localStorage.getItem('xlvs_read');
-    if (stored) {
-      const data = JSON.parse(stored);
-      if (data.date === today) {
-        setReadCount(data.count);
-      } else {
-        localStorage.setItem('xlvs_read', JSON.stringify({ date: today, count: 0 }));
-      }
-    }
+    setReadCount(loadReadState().count);
   }, []);
 
   const handleArticleClick = async (article: Article) => {
@@ -76,10 +69,7 @@ function App() {
       await markRead(article.id);
       const newCount = readCount + 1;
       setReadCount(newCount);
-      localStorage.setItem(
-        'xlvs_read',
-        JSON.stringify({ date: new Date().toDateString(), count: newCount })
-      );
+      saveReadCount(newCount);
     }
   };
 
@@ -99,7 +89,7 @@ function App() {
   const allRead = readCount >= DAILY_LIMIT;
 
   return (
-    <div className="min-h-screen bg-[#f2f2f2] pb-16">
+    <div className="min-h-screen bg-[#f7f8f5] pb-16">
       {/* ===== 发现页 ===== */}
       {activeTab === 'discover' && (
         <>
@@ -114,8 +104,8 @@ function App() {
                 </div>
                 <h1 className="text-base font-bold text-[#1a1a1a] tracking-tight">小绿书</h1>
               </div>
-              <span className="text-[11px] text-emerald-500 font-medium bg-emerald-50 px-2.5 py-1 rounded-full">
-                {articles.length} 篇精选
+              <span className="text-[11px] text-emerald-700 font-medium bg-emerald-50 px-2.5 py-1 rounded-full">
+                今日 {articles.length} 篇 · 已读 {readCount}
               </span>
             </div>
             {/* 搜索栏 */}
@@ -128,24 +118,18 @@ function App() {
             {loading ? (
               <SkeletonGrid />
             ) : allRead ? (
-              <DailyComplete count={readCount} limit={DAILY_LIMIT} />
+              <DailyComplete count={readCount} limit={DAILY_LIMIT} articles={articles} />
             ) : displayArticles.length === 0 ? (
-              <div className="text-center pt-28">
-                <div className="w-20 h-20 rounded-full bg-white flex items-center justify-center mx-auto mb-4">
-                  <span className="text-4xl">🌱</span>
+              searchQuery ? (
+                <div className="text-center pt-28">
+                  <div className="w-20 h-20 rounded-full bg-white flex items-center justify-center mx-auto mb-4">
+                    <span className="text-4xl">🔍</span>
+                  </div>
+                  <p className="text-sm text-[#999]">没有找到相关内容</p>
                 </div>
-                <p className="text-sm text-[#999] mb-1">
-                  {searchQuery ? '没有找到相关内容' : '还没有内容'}
-                </p>
-                {!searchQuery && (
-                  <button
-                    onClick={() => setShowFeeds(true)}
-                    className="mt-4 px-6 py-2.5 bg-emerald-500 text-white text-sm rounded-full font-medium press-scale shadow-sm shadow-emerald-200"
-                  >
-                    添加订阅源
-                  </button>
-                )}
-              </div>
+              ) : (
+                <EmptyRecommend onDone={loadData} onManage={() => setShowFeeds(true)} />
+              )
             ) : (
               <div className="columns-2 gap-2">
                 {displayArticles.map((article, i) => (
@@ -172,7 +156,6 @@ function App() {
           </header>
           <FavoritesPage
             favorites={favorites}
-            articles={articles}
             onArticleClick={handleArticleClick}
           />
         </>
@@ -188,13 +171,13 @@ function App() {
           </header>
           <div className="p-4 space-y-3">
             {/* 用户卡片 */}
-            <div className="bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-2xl p-5 flex items-center gap-4 shadow-lg shadow-emerald-100">
-              <div className="w-14 h-14 rounded-2xl bg-white/20 backdrop-blur flex items-center justify-center">
+            <div className="bg-emerald-50 border border-emerald-100/60 rounded-2xl p-5 flex items-center gap-4">
+              <div className="w-14 h-14 rounded-2xl bg-white flex items-center justify-center shadow-sm">
                 <span className="text-2xl">🌿</span>
               </div>
               <div>
-                <p className="font-bold text-white text-lg">小绿书用户</p>
-                <p className="text-xs text-emerald-100 mt-0.5">只看好内容，不焦虑</p>
+                <p className="font-bold text-emerald-900 text-lg">小绿书用户</p>
+                <p className="text-xs text-emerald-700/70 mt-0.5">只看好内容，不焦虑</p>
               </div>
             </div>
 
@@ -273,8 +256,8 @@ function App() {
         <ArticleDetail
           article={selectedArticle}
           onBack={() => setSelectedArticle(null)}
-          isFavorited={favorites.includes(selectedArticle.id)}
-          onToggleFavorite={() => toggleFavorite(selectedArticle.id)}
+          isFavorited={favoriteIds.includes(selectedArticle.id)}
+          onToggleFavorite={() => toggleFavorite(selectedArticle)}
         />
       )}
 

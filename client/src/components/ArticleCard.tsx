@@ -7,22 +7,26 @@ interface Props {
 }
 
 const PERSONA_CONFIG: Record<string, { color: string; icon: string }> = {
-  '科技小明': { color: '#3b82f6', icon: '⚡' },
-  '投资笔记': { color: '#f59e0b', icon: '📈' },
-  '生活观察': { color: '#ec4899', icon: '🌿' },
-  '深度阅读': { color: '#8b5cf6', icon: '📖' },
+  '科技小明': { color: '#059669', icon: '⚡' },
+  '投资笔记': { color: '#047857', icon: '📈' },
+  '生活观察': { color: '#10b981', icon: '🌿' },
+  '深度阅读': { color: '#065f46', icon: '📖' },
 };
 
+// 收敛到绿色系 4 档：薄荷 / 鼠尾草 / 墨绿 / 米黄点缀
 const GRADIENTS = [
-  'linear-gradient(135deg, #e0f2fe 0%, #bae6fd 50%, #7dd3fc 100%)',
-  'linear-gradient(135deg, #ecfdf5 0%, #a7f3d0 50%, #6ee7b7 100%)',
-  'linear-gradient(135deg, #fef3c7 0%, #fde68a 50%, #fcd34d 100%)',
-  'linear-gradient(135deg, #ede9fe 0%, #c4b5fd 50%, #a78bfa 100%)',
-  'linear-gradient(135deg, #fce7f3 0%, #fbcfe8 50%, #f9a8d4 100%)',
-  'linear-gradient(135deg, #dbeafe 0%, #93c5fd 50%, #60a5fa 100%)',
-  'linear-gradient(135deg, #d1fae5 0%, #6ee7b7 50%, #34d399 100%)',
-  'linear-gradient(135deg, #fee2e2 0%, #fca5a5 50%, #f87171 100%)',
+  'linear-gradient(135deg, #ecfdf5 0%, #a7f3d0 60%, #6ee7b7 100%)',
+  'linear-gradient(135deg, #f0fdf4 0%, #bbf7d0 60%, #86efac 100%)',
+  'linear-gradient(135deg, #d1fae5 0%, #6ee7b7 60%, #34d399 100%)',
+  'linear-gradient(135deg, #fefce8 0%, #ecfccb 60%, #bef264 100%)',
 ];
+
+// 粗略阅读时长：中文约 400 字/分钟
+function estimateReadMinutes(article: Article): number {
+  const text = article.rewritten_content || article.content || article.summary || '';
+  const chars = text.replace(/<[^>]+>/g, '').length;
+  return Math.max(1, Math.round(chars / 400));
+}
 
 export function ArticleCard({ article, onClick, index }: Props) {
   const displayTitle = article.rewritten_title || article.title;
@@ -30,10 +34,11 @@ export function ArticleCard({ article, onClick, index }: Props) {
   const pConfig = PERSONA_CONFIG[persona] || { color: '#6b7280', icon: persona.charAt(0) };
   const score = article.ai_score;
   const gradient = GRADIENTS[article.id % GRADIENTS.length];
+  const readMin = estimateReadMinutes(article);
 
-  // Parse tags
   let tags: string[] = [];
   try { tags = article.ai_tags ? JSON.parse(article.ai_tags) : []; } catch {}
+  const primaryTag = tags[0];
 
   const aspects = ['aspect-[3/4]', 'aspect-[4/5]', 'aspect-square', 'aspect-[3/4]', 'aspect-[5/6]'];
   const coverAspect = aspects[article.id % aspects.length];
@@ -63,10 +68,9 @@ export function ArticleCard({ article, onClick, index }: Props) {
               parent.innerHTML = `<div class="w-full h-full flex items-center justify-center"><span class="text-4xl opacity-40">${pConfig.icon}</span></div>`;
             }}
           />
-          {/* Score overlay */}
-          {score != null && score >= 7 && (
-            <div className="absolute top-2 right-2 score-badge bg-white/80 backdrop-blur-sm text-emerald-600">
-              🔥 {score.toFixed(0)}
+          {score != null && score >= 9 && (
+            <div className="absolute top-2 right-2 px-2 py-0.5 rounded-full bg-white/85 backdrop-blur-sm text-emerald-700 text-[10px] font-semibold">
+              精选
             </div>
           )}
         </div>
@@ -76,9 +80,9 @@ export function ArticleCard({ article, onClick, index }: Props) {
           style={{ background: gradient }}
         >
           <span className="text-5xl opacity-30">{pConfig.icon}</span>
-          {score != null && score >= 7 && (
-            <div className="absolute top-2 right-2 score-badge bg-white/80 backdrop-blur-sm text-emerald-600">
-              🔥 {score.toFixed(0)}
+          {score != null && score >= 9 && (
+            <div className="absolute top-2 right-2 px-2 py-0.5 rounded-full bg-white/85 backdrop-blur-sm text-emerald-700 text-[10px] font-semibold">
+              精选
             </div>
           )}
         </div>
@@ -86,23 +90,12 @@ export function ArticleCard({ article, onClick, index }: Props) {
 
       {/* Content */}
       <div className="px-3 pt-2.5 pb-3">
-        <h3 className="text-[13px] font-semibold text-[#1a1a1a] leading-[1.4] line-clamp-2 mb-2">
+        <h3 className="text-[14px] font-semibold text-[#1a1a1a] leading-[1.5] line-clamp-2 mb-2">
           {displayTitle}
         </h3>
 
-        {/* Tags */}
-        {tags.length > 0 && (
-          <div className="flex flex-wrap gap-1 mb-2.5">
-            {tags.slice(0, 2).map(tag => (
-              <span key={tag} className="tag-pill bg-emerald-50 text-emerald-600">
-                {tag}
-              </span>
-            ))}
-          </div>
-        )}
-
-        {/* Author row */}
-        <div className="flex items-center gap-1.5">
+        {/* Author + meta row */}
+        <div className="flex items-center gap-1.5 min-w-0">
           <div
             className="w-[18px] h-[18px] rounded-full shrink-0 flex items-center justify-center"
             style={{ backgroundColor: pConfig.color + '18' }}
@@ -112,6 +105,15 @@ export function ArticleCard({ article, onClick, index }: Props) {
           <span className="text-[11px] text-[#9ca3af] truncate leading-none">
             {persona}
           </span>
+          <span className="text-[11px] text-[#d1d5db] leading-none">·</span>
+          <span className="text-[11px] text-[#9ca3af] leading-none shrink-0">
+            {readMin} 分钟
+          </span>
+          {primaryTag && (
+            <span className="ml-auto tag-pill bg-emerald-50 text-emerald-600 shrink-0">
+              {primaryTag}
+            </span>
+          )}
         </div>
       </div>
     </div>
