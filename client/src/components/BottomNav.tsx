@@ -1,3 +1,5 @@
+import type { ReactNode } from 'react';
+
 type Tab = 'discover' | 'favorites' | 'settings';
 
 interface Props {
@@ -7,8 +9,8 @@ interface Props {
   dailyLimit: number;
 }
 
-export function BottomNav({ active, onChange, readCount }: Props) {
-  const tabs: { id: Tab; label: string; icon: (a: boolean) => JSX.Element }[] = [
+export function BottomNav({ active, onChange }: Props) {
+  const tabs: { id: Tab; label: string; icon: (a: boolean) => ReactNode }[] = [
     {
       id: 'discover',
       label: '发现',

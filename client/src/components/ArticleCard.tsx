@@ -7,10 +7,10 @@ interface Props {
 }
 
 const PERSONA_CONFIG: Record<string, { color: string; icon: string }> = {
-  '科技小明': { color: '#059669', icon: '⚡' },
-  '投资笔记': { color: '#047857', icon: '📈' },
-  '生活观察': { color: '#10b981', icon: '🌿' },
-  '深度阅读': { color: '#065f46', icon: '📖' },
+  '科技小明': { color: '#3b82f6', icon: '⚡' },
+  '投资笔记': { color: '#f59e0b', icon: '📈' },
+  '生活观察': { color: '#ec4899', icon: '🌿' },
+  '深度阅读': { color: '#8b5cf6', icon: '📖' },
 };
 
 // 收敛到绿色系 4 档：薄荷 / 鼠尾草 / 墨绿 / 米黄点缀

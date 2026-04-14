@@ -33,8 +33,16 @@ export interface Tag {
   count: number;
 }
 
-export async function fetchArticles(minScore = 6, tag?: string): Promise<{ articles: Article[]; dailyLimit: number; count: number }> {
-  const params = new URLSearchParams({ minScore: String(minScore) });
+export interface ArticlesResponse {
+  articles: Article[];
+  total: number;
+  offset: number;
+  hasMore: boolean;
+  count: number;
+}
+
+export async function fetchArticles(minScore = 6, tag?: string, offset = 0, limit = 20): Promise<ArticlesResponse> {
+  const params = new URLSearchParams({ minScore: String(minScore), offset: String(offset), limit: String(limit) });
   if (tag) params.set('tag', tag);
   const res = await fetch(`${BASE}/articles?${params}`);
   return res.json();
@@ -69,6 +77,16 @@ export async function deleteFeed(id: number) {
 
 export async function refreshFeeds() {
   const res = await fetch(`${BASE}/feeds/refresh`, { method: 'POST' });
+  return res.json();
+}
+
+export async function toggleFavorite(id: number): Promise<{ ok: boolean; is_favorited: number }> {
+  const res = await fetch(`${BASE}/articles/${id}/favorite`, { method: 'POST' });
+  return res.json();
+}
+
+export async function fetchFavorites(): Promise<Article[]> {
+  const res = await fetch(`${BASE}/articles/favorites`);
   return res.json();
 }
 

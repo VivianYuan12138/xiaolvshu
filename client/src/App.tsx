@@ -10,7 +10,7 @@ import { BottomNav } from './components/BottomNav';
 import { SearchBar } from './components/SearchBar';
 import { FavoritesPage } from './components/FavoritesPage';
 import { EmptyRecommend } from './components/EmptyRecommend';
-import { loadFavorites, saveFavorites, loadReadState, saveReadCount } from './storage';
+import { loadFavorites, loadReadState, saveReadCount } from './storage';
 
 const DAILY_LIMIT = 999;
 
@@ -22,11 +22,14 @@ function App() {
   const [showFeeds, setShowFeeds] = useState(false);
   const [readCount, setReadCount] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(false);
   const [activeTab, setActiveTab] = useState<'discover' | 'favorites' | 'settings'>('discover');
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<Article[] | null>(null);
   const [favorites, setFavorites] = useState<Article[]>([]);
   const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [minScore, setMinScore] = useState(6);
 
   useEffect(() => {
     // 一次性迁移：localStorage → 后端
@@ -55,13 +58,23 @@ function App() {
   const loadData = useCallback(async () => {
     setLoading(true);
     const [articleData, tagData] = await Promise.all([
-      fetchArticles(6, selectedTag ?? undefined),
+      fetchArticles(minScore, selectedTag ?? undefined, 0),
       fetchTags(),
     ]);
     setArticles(articleData.articles);
+    setHasMore(articleData.hasMore);
     setTags(tagData);
     setLoading(false);
-  }, [selectedTag]);
+  }, [selectedTag, minScore]);
+
+  const loadMore = useCallback(async () => {
+    if (loadingMore || !hasMore) return;
+    setLoadingMore(true);
+    const data = await fetchArticles(minScore, selectedTag ?? undefined, articles.length);
+    setArticles(prev => [...prev, ...data.articles]);
+    setHasMore(data.hasMore);
+    setLoadingMore(false);
+  }, [loadingMore, hasMore, articles.length, selectedTag, minScore]);
 
   useEffect(() => {
     loadData();
@@ -140,16 +153,32 @@ function App() {
                 <EmptyRecommend onDone={loadData} onManage={() => setShowFeeds(true)} />
               )
             ) : (
-              <div className="columns-2 gap-2">
-                {displayArticles.map((article, i) => (
-                  <ArticleCard
-                    key={article.id}
-                    article={article}
-                    onClick={() => handleArticleClick(article)}
-                    index={i}
-                  />
-                ))}
-              </div>
+              <>
+                <div className="columns-2 gap-2">
+                  {displayArticles.map((article, i) => (
+                    <ArticleCard
+                      key={article.id}
+                      article={article}
+                      onClick={() => handleArticleClick(article)}
+                      index={i}
+                    />
+                  ))}
+                </div>
+                {!searchResults && hasMore && (
+                  <div className="flex justify-center py-6">
+                    <button
+                      onClick={loadMore}
+                      disabled={loadingMore}
+                      className="px-6 py-2.5 bg-white rounded-full text-sm text-emerald-600 font-medium shadow-sm press-scale disabled:opacity-50"
+                    >
+                      {loadingMore ? '加载中...' : '加载更多'}
+                    </button>
+                  </div>
+                )}
+                {!searchResults && !hasMore && articles.length > 0 && (
+                  <p className="text-center text-xs text-[#ccc] py-6">已经到底啦</p>
+                )}
+              </>
             )}
           </main>
         </>
@@ -222,20 +251,35 @@ function App() {
                   <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
                 </svg>
               </button>
-              <button className="w-full px-4 py-4 flex items-center justify-between border-b border-[#f5f5f5]">
-                <div className="flex items-center gap-3">
+              <div className="w-full px-4 py-4 border-b border-[#f5f5f5]">
+                <div className="flex items-center gap-3 mb-3">
                   <div className="w-8 h-8 rounded-xl bg-amber-50 flex items-center justify-center"><span className="text-base">✨</span></div>
                   <span className="text-sm text-[#333] font-medium">内容质量过滤</span>
+                  <span className="ml-auto text-xs text-emerald-500 bg-emerald-50 px-2 py-0.5 rounded-full font-medium">
+                    {minScore >= 8 ? '只看精品' : minScore >= 6 ? '优质内容' : minScore >= 4 ? '宽松浏览' : '全部显示'}
+                  </span>
                 </div>
-                <span className="text-xs text-emerald-500 bg-emerald-50 px-2 py-0.5 rounded-full font-medium">≥ 5分</span>
-              </button>
-              <button className="w-full px-4 py-4 flex items-center justify-between">
+                <div className="flex items-center gap-3 px-1">
+                  <span className="text-[10px] text-[#bbb] w-4">1</span>
+                  <input
+                    type="range"
+                    min={1}
+                    max={9}
+                    value={minScore}
+                    onChange={(e) => setMinScore(Number(e.target.value))}
+                    className="flex-1 h-1 accent-emerald-500"
+                  />
+                  <span className="text-[10px] text-[#bbb] w-4">9</span>
+                  <span className="text-sm font-semibold text-emerald-600 w-8 text-right">{minScore}</span>
+                </div>
+              </div>
+              <div className="w-full px-4 py-4 flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className="w-8 h-8 rounded-xl bg-purple-50 flex items-center justify-center"><span className="text-base">🤖</span></div>
                   <span className="text-sm text-[#333] font-medium">AI 引擎</span>
                 </div>
                 <span className="text-xs text-[#999]">DeepSeek V3</span>
-              </button>
+              </div>
             </div>
 
             {/* 关于 */}
@@ -267,6 +311,7 @@ function App() {
           onBack={() => setSelectedArticle(null)}
           isFavorited={favoriteIds.includes(selectedArticle.id)}
           onToggleFavorite={() => toggleFavorite(selectedArticle)}
+          showFavHint={favorites.length === 0}
         />
       )}
 

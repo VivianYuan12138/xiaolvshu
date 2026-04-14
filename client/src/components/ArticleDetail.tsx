@@ -7,6 +7,7 @@ interface Props {
   onBack: () => void;
   isFavorited: boolean;
   onToggleFavorite: () => void;
+  showFavHint?: boolean;
 }
 
 const PERSONA_CONFIG: Record<string, { color: string; icon: string }> = {
@@ -53,7 +54,7 @@ function renderMarkdown(content: string) {
   });
 }
 
-export function ArticleDetail({ article, onBack, isFavorited, onToggleFavorite }: Props) {
+export function ArticleDetail({ article, onBack, isFavorited, onToggleFavorite, showFavHint }: Props) {
   const [closing, setClosing] = useState(false);
   const [comments, setComments] = useState<Comment[]>([]);
   const [streamingReply, setStreamingReply] = useState('');
@@ -137,7 +138,8 @@ export function ArticleDetail({ article, onBack, isFavorited, onToggleFavorite }
           setIsStreaming(false);
           abortRef.current = null;
         },
-        onError: (error) => {
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        onError: (_error) => {
           const partial = streamingReplyRef.current;
           if (partial) {
             setComments(prev => [...prev, {
@@ -233,6 +235,19 @@ export function ArticleDetail({ article, onBack, isFavorited, onToggleFavorite }
               </span>
             ))}
           </div>
+        )}
+
+        {/* 收藏引导 */}
+        {showFavHint && !isFavorited && (
+          <button
+            onClick={onToggleFavorite}
+            className="mt-6 w-full flex items-center gap-3 px-4 py-3 bg-emerald-50 rounded-xl press-scale"
+          >
+            <svg className="w-5 h-5 text-emerald-500 shrink-0" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
+            </svg>
+            <span className="text-sm text-emerald-700">收藏喜欢的文章，AI 会学习你的偏好推荐更多</span>
+          </button>
         )}
 
         {/* Meta */}
