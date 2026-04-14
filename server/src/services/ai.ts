@@ -60,31 +60,43 @@ export async function scoreArticle(articleId: number): Promise<ScoreResult> {
   return result;
 }
 
-export async function scoreUnratedArticles(limit = 20) {
+/**
+ * 并发评分未评分文章
+ * @param limit 总数上限
+ * @param concurrency 并发数（默认 5）
+ */
+export async function scoreUnratedArticles(limit = 20, concurrency = 5) {
   const db = getDb();
   const articles = db
     .prepare('SELECT id FROM articles WHERE ai_score IS NULL ORDER BY fetched_at DESC LIMIT ?')
     .all(limit) as { id: number }[];
   db.close();
 
-  console.log(`📊 评分: ${articles.length} 篇待评`);
-  const results = [];
-  for (let i = 0; i < articles.length; i++) {
-    const article = articles[i];
-    try {
-      const result = await scoreArticle(article.id);
-      const icon = result.score >= 6 ? '✅' : result.score >= 4 ? '🔸' : '❌';
-      console.log(`  ${icon} [${result.score}] ${result.summary?.slice(0, 50)}`);
-      results.push({ id: article.id, ...result });
-    } catch (err) {
-      console.log(`  ❌ ${article.id}: ${(err as Error).message?.slice(0, 60)}`);
-      results.push({ id: article.id, error: (err as Error).message });
+  if (articles.length === 0) return [];
+
+  console.log(`📊 评分: ${articles.length} 篇待评 (并发: ${concurrency})`);
+  const results: any[] = [];
+  const queue = [...articles];
+
+  async function worker() {
+    while (queue.length > 0) {
+      const article = queue.shift()!;
+      try {
+        const result = await scoreArticle(article.id);
+        const icon = result.score >= 6 ? '✅' : result.score >= 4 ? '🔸' : '❌';
+        console.log(`  ${icon} [${result.score}] ${result.summary?.slice(0, 50)}`);
+        results.push({ id: article.id, ...result });
+      } catch (err) {
+        console.log(`  ❌ ${article.id}: ${(err as Error).message?.slice(0, 60)}`);
+        results.push({ id: article.id, error: (err as Error).message });
+      }
     }
-    // Rate limit
-    if (i < articles.length - 1) await new Promise(r => setTimeout(r, 800));
   }
 
-  const good = results.filter(r => 'score' in r && (r as any).score >= 6).length;
+  const workers = Array.from({ length: Math.min(concurrency, queue.length) }, () => worker());
+  await Promise.all(workers);
+
+  const good = results.filter(r => 'score' in r && r.score >= 6).length;
   console.log(`📊 结果: ${good} 篇优质 / ${results.length} 篇总计`);
   return results;
 }
