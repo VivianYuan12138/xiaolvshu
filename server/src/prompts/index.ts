@@ -24,3 +24,10 @@ export {
   MAX_CONTENT_LENGTH,
   type RewriteResult,
 } from './rewriting.js';
+
+export {
+  // 聊天
+  buildChatSystemPrompt,
+  CHAT_TEMPERATURE,
+  CHAT_MAX_TOKENS,
+} from './chat.js';

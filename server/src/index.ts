@@ -7,6 +7,7 @@ import { initDb } from './db/schema.js';
 import { seedFeeds } from './db/seeds.js';
 import feedsRouter from './routes/feeds.js';
 import articlesRouter from './routes/articles.js';
+import chatRouter from './routes/chat.js';
 import fs from 'fs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -30,6 +31,7 @@ app.use(express.json());
 // API 路由
 app.use('/api/feeds', feedsRouter);
 app.use('/api/articles', articlesRouter);
+app.use('/api/articles', chatRouter);
 
 // 健康检查
 app.get('/api/health', (_req, res) => {
