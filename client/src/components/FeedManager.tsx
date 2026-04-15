@@ -34,7 +34,7 @@ export function FeedManager({ onClose }: Props) {
     setLoading(true);
     setMessage('正在刷新...');
     await refreshFeeds();
-    setMessage('刷新完成! 使用 /rewrite 命令让AI改写内容');
+    setMessage('刷新完成！新文章将由 AI 自动处理');
     setLoading(false);
   };
 
@@ -76,7 +76,7 @@ export function FeedManager({ onClose }: Props) {
           <button
             onClick={handleAdd}
             disabled={loading}
-            className="px-5 py-2.5 bg-[#ff2442] text-white text-sm rounded-lg font-medium
+            className="px-5 py-2.5 bg-emerald-500 text-white text-sm rounded-lg font-medium
                        disabled:opacity-50 press-scale"
           >
             添加
@@ -113,7 +113,7 @@ export function FeedManager({ onClose }: Props) {
                   </div>
                   <button
                     onClick={() => handleDelete(feed.id)}
-                    className="ml-2 text-[11px] text-[#ff2442] shrink-0 press-scale"
+                    className="ml-2 text-[11px] text-red-400 shrink-0 press-scale"
                   >
                     移除
                   </button>
@@ -145,7 +145,7 @@ export function FeedManager({ onClose }: Props) {
                   setLoading(false);
                 }}
                 className={`w-full text-left p-3 rounded-lg flex items-center gap-3 press-scale ${
-                  added ? 'bg-[#fafafa] opacity-40' : 'bg-[#fff5f5]'
+                  added ? 'bg-[#fafafa] opacity-40' : 'bg-emerald-50/50'
                 }`}
               >
                 <span className="text-xl">{rec.emoji}</span>

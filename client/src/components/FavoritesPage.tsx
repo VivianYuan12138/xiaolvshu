@@ -2,13 +2,12 @@ import type { Article } from '../api';
 import { ArticleCard } from './ArticleCard';
 
 interface Props {
-  favorites: number[];
-  articles: Article[];
+  favorites: Article[];
   onArticleClick: (article: Article) => void;
 }
 
-export function FavoritesPage({ favorites, articles, onArticleClick }: Props) {
-  const favArticles = articles.filter(a => favorites.includes(a.id));
+export function FavoritesPage({ favorites, onArticleClick }: Props) {
+  const favArticles = favorites;
 
   if (favArticles.length === 0) {
     return (

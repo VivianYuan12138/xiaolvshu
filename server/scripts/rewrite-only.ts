@@ -1,8 +1,9 @@
 /**
- * 只跑改写，不抓取不评分（需要先评过分）
+ * AI 改写
  * 用法:
- *   npx tsx scripts/rewrite-only.ts          # 改写所有待改写文章
- *   npx tsx scripts/rewrite-only.ts -n 5     # 只改5篇（试试效果）
+ *   npx tsx scripts/rewrite-only.ts          # 默认改 10 篇（debug 快速验证）
+ *   npx tsx scripts/rewrite-only.ts -n 30    # 改 30 篇
+ *   npx tsx scripts/rewrite-only.ts --all    # 改所有待改写文章
  */
 import 'dotenv/config';
 import { initDb } from '../src/db/schema.js';
@@ -11,21 +12,18 @@ import { rewriteUnprocessedArticles } from '../src/services/author-agent.js';
 initDb();
 
 const args = process.argv.slice(2);
-const batchSize = args.includes('-n') ? parseInt(args[args.indexOf('-n') + 1]) || 15 : 15;
+const all = args.includes('--all');
+const limit = args.includes('-n')
+  ? parseInt(args[args.indexOf('-n') + 1]) || 10
+  : all ? 9999 : 10;
 
 async function main() {
-  console.log('\n========== 只跑 AI 改写 ==========');
-  let round = 1;
-  let total = 0;
-  while (true) {
-    const results = await rewriteUnprocessedArticles(batchSize);
-    if (results.length === 0) break;
-    const ok = results.filter(r => !('error' in r)).length;
-    total += ok;
-    console.log(`  第${round}轮: ${ok}/${results.length}，累计 ${total} 篇`);
-    round++;
-  }
-  console.log(`\n✅ 改写完成，共 ${total} 篇。用 show-articles.ts 查看质量\n`);
+  const start = Date.now();
+  console.log(`\n========== AI 改写 ${all ? '(全量)' : `(${limit}篇)`} ==========`);
+  const results = await rewriteUnprocessedArticles(limit);
+  const ok = results.filter(r => !('error' in r)).length;
+  const sec = ((Date.now() - start) / 1000).toFixed(1);
+  console.log(`\n✅ 完成，${ok}/${results.length} 篇，耗时 ${sec}s。用 show-articles.ts 查看质量\n`);
 }
 
 main().catch(console.error);

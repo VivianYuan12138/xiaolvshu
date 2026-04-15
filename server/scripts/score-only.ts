@@ -1,8 +1,9 @@
 /**
- * 只跑评分，不抓取不改写
+ * AI 评分
  * 用法:
- *   npx tsx scripts/score-only.ts          # 评分所有未评分文章
- *   npx tsx scripts/score-only.ts -n 10    # 只评10篇
+ *   npx tsx scripts/score-only.ts          # 默认评 10 篇（debug 快速验证）
+ *   npx tsx scripts/score-only.ts -n 50    # 评 50 篇
+ *   npx tsx scripts/score-only.ts --all    # 评所有未评分文章
  */
 import 'dotenv/config';
 import { initDb } from '../src/db/schema.js';
@@ -11,20 +12,17 @@ import { scoreUnratedArticles } from '../src/services/ai.js';
 initDb();
 
 const args = process.argv.slice(2);
-const batchSize = args.includes('-n') ? parseInt(args[args.indexOf('-n') + 1]) || 30 : 30;
+const all = args.includes('--all');
+const limit = args.includes('-n')
+  ? parseInt(args[args.indexOf('-n') + 1]) || 10
+  : all ? 9999 : 10;
 
 async function main() {
-  console.log('\n========== 只跑 AI 评分 ==========');
-  let round = 1;
-  let total = 0;
-  while (true) {
-    const results = await scoreUnratedArticles(batchSize);
-    if (results.length === 0) break;
-    total += results.length;
-    console.log(`  第${round}轮完成，累计 ${total} 篇`);
-    round++;
-  }
-  console.log(`\n✅ 评分完成，共 ${total} 篇。用 stats.ts 查看分布\n`);
+  const start = Date.now();
+  console.log(`\n========== AI 评分 ${all ? '(全量)' : `(${limit}篇)`} ==========`);
+  const results = await scoreUnratedArticles(limit);
+  const sec = ((Date.now() - start) / 1000).toFixed(1);
+  console.log(`\n✅ 完成，${results.length} 篇��耗时 ${sec}s。用 stats.ts 查看分布\n`);
 }
 
 main().catch(console.error);

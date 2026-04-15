@@ -31,3 +31,30 @@ export const SCORING_SYSTEM_PROMPT_V1 = `你是内容质量评估员。严格评
 
 返回格式（仅JSON）：
 {"score": 7, "tags": ["AI", "开源"], "summary": "一句话核心内容（要有信息量，不是复述标题）", "reason": "评分理由"}`;
+
+export interface UserPreferences {
+  topTags: string[];
+  recentTitles: string[];
+}
+
+export function buildScoringPrompt(preferences?: UserPreferences): string {
+  if (!preferences || (preferences.topTags.length === 0 && preferences.recentTitles.length === 0)) {
+    return SCORING_SYSTEM_PROMPT_V1;
+  }
+
+  return SCORING_SYSTEM_PROMPT_V1 + `
+
+## 用户偏好评估（额外维度）
+用户最近收藏的内容主题：${preferences.topTags.slice(0, 8).join('、')}
+用户收藏标题示例：
+${preferences.recentTitles.slice(0, 5).map(t => `- ${t}`).join('\n')}
+
+在保持质量评分(score)不变的基础上，额外评估"与用户兴趣的相关度"(relevance)。
+相关度评分标准（1-10分）：
+- 主题完全匹配用户兴趣标签 → 8-10
+- 部分相关或相似领域 → 5-7
+- 完全不相关但高质量 → 3-5（不惩罚高质量内容）
+
+返回格式（仅JSON）：
+{"score": 7, "relevance": 8, "tags": ["AI", "开源"], "summary": "一句话核心内容", "reason": "评分理由"}`;
+}

@@ -120,6 +120,28 @@ export async function chatCompletion(
   throw new Error('Max retries exceeded');
 }
 
+export async function* chatCompletionStream(
+  messages: ChatMessage[],
+  options: { model?: string; maxTokens?: number; temperature?: number } = {},
+): AsyncGenerator<string, void, unknown> {
+  const client = getClient();
+
+  const stream = await client.chat.completions.create({
+    model: options.model || getRewriteModel(),
+    max_tokens: options.maxTokens || 800,
+    temperature: options.temperature ?? 0.7,
+    messages,
+    stream: true,
+  });
+
+  for await (const chunk of stream) {
+    const delta = chunk.choices?.[0]?.delta?.content;
+    if (delta) {
+      yield delta;
+    }
+  }
+}
+
 export function parseJSON<T>(text: string): T {
   const jsonMatch = text.match(/\{[\s\S]*\}/);
   if (!jsonMatch) {

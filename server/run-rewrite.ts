@@ -4,11 +4,17 @@ import { seedFeeds } from './src/db/seeds.js';
 import { fetchAllFeeds } from './src/services/rss.js';
 import { scoreUnratedArticles } from './src/services/ai.js';
 import { rewriteUnprocessedArticles } from './src/services/author-agent.js';
+import { discoverContent, cleanupDynamicFeeds } from './src/services/discovery.js';
 
 initDb();
 seedFeeds();
 
 async function main() {
+  // Step 0: 基于收藏发现新内容
+  console.log('\n========== Step 0: 内容发现（基于收藏） ==========');
+  await discoverContent();
+  cleanupDynamicFeeds();
+
   // Step 1: Fetch all feeds
   console.log('\n========== Step 1: 抓取信息源 ==========');
   await fetchAllFeeds();

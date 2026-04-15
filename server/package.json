@@ -12,13 +12,16 @@
     "score": "tsx scripts/score-only.ts",
     "rewrite": "tsx scripts/rewrite-only.ts",
     "stats": "tsx scripts/stats.ts",
-    "show": "tsx scripts/show-articles.ts"
+    "show": "tsx scripts/show-articles.ts",
+    "discover": "tsx scripts/discover-only.ts"
   },
   "dependencies": {
+    "@mozilla/readability": "^0.6.0",
     "better-sqlite3": "^12.9.0",
     "cors": "^2.8.5",
     "dotenv": "^17.4.2",
     "express": "^5.1.0",
+    "linkedom": "^0.18.12",
     "openai": "^6.34.0",
     "rss-parser": "^3.13.0"
   },

@@ -75,7 +75,12 @@ export async function rewriteArticle(articleId: number): Promise<RewriteResult |
   return result;
 }
 
-export async function rewriteUnprocessedArticles(limit = 20) {
+/**
+ * 并发改写未处理文章
+ * @param limit 总数上限
+ * @param concurrency 并发数（默认 5）
+ */
+export async function rewriteUnprocessedArticles(limit = 20, concurrency = 5) {
   const db = getDb();
   // Only rewrite scored articles above threshold
   const articles = db
@@ -94,26 +99,29 @@ export async function rewriteUnprocessedArticles(limit = 20) {
     return [];
   }
 
-  console.log(`📝 改写: ${articles.length} 篇（评分≥${MIN_SCORE_TO_REWRITE}）`);
-  const results = [];
-  for (let i = 0; i < articles.length; i++) {
-    const article = articles[i];
-    try {
-      const result = await rewriteArticle(article.id);
-      if (result) {
-        console.log(`  ✅ ${result.emoji_title || result.title}`);
-        results.push({ id: article.id, ...result });
-      } else {
-        console.log(`  ⏭️ 跳过: ${article.title.slice(0, 40)}`);
+  console.log(`📝 改写: ${articles.length} 篇 (并发: ${concurrency})`);
+  const results: any[] = [];
+  const queue = [...articles];
+
+  async function worker() {
+    while (queue.length > 0) {
+      const article = queue.shift()!;
+      try {
+        const result = await rewriteArticle(article.id);
+        if (result) {
+          console.log(`  ✅ ${result.emoji_title || result.title}`);
+          results.push({ id: article.id, ...result });
+        } else {
+          console.log(`  ⏭️ 跳过: ${article.title.slice(0, 40)}`);
+        }
+      } catch (err) {
+        console.log(`  ❌ ${article.id}: ${(err as Error).message?.slice(0, 60)}`);
+        results.push({ id: article.id, error: (err as Error).message });
       }
-    } catch (err) {
-      console.log(`  ❌ ${article.id}: ${(err as Error).message?.slice(0, 60)}`);
-      results.push({ id: article.id, error: (err as Error).message });
-    }
-    // Rate limit
-    if (i < articles.length - 1) {
-      await new Promise(r => setTimeout(r, 1500));
     }
   }
+
+  const workers = Array.from({ length: Math.min(concurrency, queue.length) }, () => worker());
+  await Promise.all(workers);
   return results;
 }

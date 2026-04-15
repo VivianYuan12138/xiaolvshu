@@ -82,5 +82,18 @@ export function initDb() {
     db.exec('ALTER TABLE feeds ADD COLUMN error_count INTEGER NOT NULL DEFAULT 0');
   }
 
+  // 评论表
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS comments (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      article_id INTEGER NOT NULL REFERENCES articles(id) ON DELETE CASCADE,
+      role TEXT NOT NULL DEFAULT 'user',
+      content TEXT NOT NULL,
+      parent_id INTEGER REFERENCES comments(id) ON DELETE CASCADE,
+      created_at TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+    CREATE INDEX IF NOT EXISTS idx_comments_article ON comments(article_id);
+  `);
+
   db.close();
 }
